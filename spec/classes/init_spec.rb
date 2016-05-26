@@ -273,6 +273,35 @@ describe 'pam' do
 
   describe 'config files' do
     platforms.sort.each do |k,v|
+      context "when configuring pam_d_sshd_template on #{v[:osfamily]} with #{v[:releasetype]} #{v[:release]}" do
+        let :facts do
+          { :osfamily => v[:osfamily],
+            :"#{v[:releasetype]}" => v[:release],
+            :lsbdistid => v[:lsbdistid],
+          }
+        end
+
+        let (:params) do
+          { :pam_d_sshd_template     => 'pam/sshd.custom.erb',
+            :pam_sshd_auth_lines     => [ 'auth_lines' ],
+            :pam_sshd_account_lines  => [ 'account_lines' ],
+            :pam_sshd_session_lines  => [ 'session_lines ' ],
+            :pam_sshd_password_lines => [ 'password_lines' ],
+          }
+        end
+
+        if v[:osfamily] != 'Solaris'
+          it { should contain_file('pam_d_sshd').with_content(/auth_lines/) }
+          it { should contain_file('pam_d_sshd').with_content(/account_lines/) }
+          it { should contain_file('pam_d_sshd').with_content(/session_lines/) }
+          it { should contain_file('pam_d_sshd').with_content(/password_lines/) }
+        end
+
+        if v[:osfamily] == 'Solaris'
+          it { should_not contain_file('pam_d_sshd') }
+        end
+      end
+
       context "with specifying services param on #{v[:osfamily]} with #{v[:releasetype]} #{v[:release]}" do
         let :facts do
           { :osfamily => v[:osfamily],
@@ -792,6 +821,41 @@ describe 'pam' do
           let(:params) {{ :limits_fragments_hiera_merge => value }}
 
           it { should contain_class('pam') }
+        end
+      end
+
+      context "with pam_d_sshd_template set to pam/sshd.custom.erb without specifying pam_sshd_[auth|account|password|session]_lines" do
+        let :facts do
+          { :osfamily => v[:osfamily],
+            :"#{v[:releasetype]}" => v[:release],
+            :lsbdistid => v[:lsbdistid],
+          }
+        end
+        let(:params) { { :pam_d_sshd_template => 'pam/sshd.custom.erb' } }
+
+        it "should fail" do
+            expect {
+              should contain_class('pam')
+            }.to raise_error(Puppet::Error, /pam_sshd_\[auth|account|password|session\]_lines required for template pam\/sshd.custom.erb/)
+        end
+      end
+
+      [ :pam_sshd_auth_lines, :pam_sshd_account_lines, :pam_sshd_password_lines, :pam_sshd_session_lines ].each do |param|
+        context "with #{param} specified and pam_d_sshd_template not specified on #{v[:osfamily]} with #{v[:releasetype]} #{v[:release]}" do
+          let :facts do
+            { :osfamily => v[:osfamily],
+              :"#{v[:releasetype]}" => v[:release],
+              :lsbdistid => v[:lsbdistid],
+            }
+          end
+
+          let(:params) { { param => [ '#' ] } }
+
+          it "should fail" do
+            expect {
+              should contain_class('pam')
+            }.to raise_error(Puppet::Error, /pam_sshd_\[auth|account|password|session\]_lines is only valid when pam_d_sshd_template/)
+          end
         end
       end
     end
