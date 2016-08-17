@@ -283,22 +283,31 @@ describe 'pam' do
 
         let (:params) do
           { :pam_d_sshd_template     => 'pam/sshd.custom.erb',
-            :pam_sshd_auth_lines     => [ 'auth_lines' ],
-            :pam_sshd_account_lines  => [ 'account_lines' ],
-            :pam_sshd_session_lines  => [ 'session_lines ' ],
-            :pam_sshd_password_lines => [ 'password_lines' ],
+            :pam_sshd_auth_lines     => [ 'auth_line1', 'auth_line2' ],
+            :pam_sshd_account_lines  => [ 'account_line1', 'account_line2' ],
+            :pam_sshd_session_lines  => [ 'session_line1', 'session_line2' ],
+            :pam_sshd_password_lines => [ 'password_line1', 'password_line2' ],
           }
         end
 
-        if v[:osfamily] != 'Solaris'
-          it { should contain_file('pam_d_sshd').with_content(/auth_lines/) }
-          it { should contain_file('pam_d_sshd').with_content(/account_lines/) }
-          it { should contain_file('pam_d_sshd').with_content(/session_lines/) }
-          it { should contain_file('pam_d_sshd').with_content(/password_lines/) }
-        end
+        sshd_custom_content = <<-END.gsub(/^\s+\|/, '')
+          |# This file is being maintained by Puppet.
+          |# DO NOT EDIT
+          |#
+          |auth_line1
+          |auth_line2
+          |account_line1
+          |account_line2
+          |password_line1
+          |password_line2
+          |session_line1
+          |session_line2
+        END
 
         if v[:osfamily] == 'Solaris'
           it { should_not contain_file('pam_d_sshd') }
+        else
+          it { should contain_file('pam_d_sshd').with('content' => sshd_custom_content) }
         end
       end
 
