@@ -833,14 +833,19 @@ describe 'pam' do
         end
       end
 
-      context "with pam_d_sshd_template set to pam/sshd.custom.erb without specifying pam_sshd_[auth|account|password|session]_lines" do
+      context "with pam_d_sshd_template set to pam/sshd.custom.erb without specifying all pam_sshd_[auth|account|password|session]_lines params" do
         let :facts do
           { :osfamily => v[:osfamily],
             :"#{v[:releasetype]}" => v[:release],
             :lsbdistid => v[:lsbdistid],
           }
         end
-        let(:params) { { :pam_d_sshd_template => 'pam/sshd.custom.erb' } }
+        let(:params) do
+          { :pam_d_sshd_template => 'pam/sshd.custom.erb',
+            :pam_sshd_auth_lines => [ '#' ],
+            :pam_sshd_account_lines => [ '#' ],
+          }
+        end
 
         it "should fail" do
             expect {
