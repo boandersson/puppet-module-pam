@@ -850,7 +850,7 @@ describe 'pam' do
         it "should fail" do
             expect {
               should contain_class('pam')
-            }.to raise_error(Puppet::Error, /pam_sshd_\[auth|account|password|session\]_lines required for template pam\/sshd.custom.erb/)
+            }.to raise_error(Puppet::Error, %r{pam_sshd_\[auth\|account\|password\|session\]_lines required when using the pam/sshd.custom.erb template})
         end
       end
 
@@ -898,7 +898,7 @@ describe 'pam' do
           it "should fail" do
             expect {
               should contain_class('pam')
-            }.to raise_error(Puppet::Error, /pam_sshd_\[auth|account|password|session\]_lines is only valid when pam_d_sshd_template/)
+            }.to raise_error(Puppet::Error, %r{pam_sshd_\[auth\|account\|password\|session\]_lines are only valid when pam_d_sshd_template is configured with the pam/sshd.custom.erb template})
           end
         end
       end
