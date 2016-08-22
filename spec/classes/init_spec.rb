@@ -850,7 +850,37 @@ describe 'pam' do
         it "should fail" do
             expect {
               should contain_class('pam')
-            }.to raise_error(Puppet::Error, /pam_sshd_\[auth|account|password|session\]_lines required for template pam\/sshd.custom.erb/)
+            }.to raise_error(Puppet::Error, %r{pam_sshd_\[auth\|account\|password\|session\]_lines required when using the pam/sshd.custom.erb template})
+        end
+      end
+
+      [:pam_sshd_auth_lines, :pam_sshd_account_lines, :pam_sshd_password_lines, :pam_sshd_session_lines].each do |param|
+        context "with pam_d_sshd_template set to pam/sshd.custom.erb when only #{param} is missing" do
+          let :full_params do
+            {
+              :pam_sshd_auth_lines     => %w(auth_line1 auth_line2),
+              :pam_sshd_account_lines  => %w(account_line1 account_line2),
+              :pam_sshd_session_lines  => %w(session_line1 session_line2),
+              :pam_sshd_password_lines => %w(password_line1 password_line2),
+              :pam_d_sshd_template     => 'pam/sshd.custom.erb',
+            }
+          end
+          let :facts do
+            {
+              :osfamily             => v[:osfamily],
+              :"#{v[:releasetype]}" => v[:release],
+              :lsbdistid            => v[:lsbdistid],
+            }
+          end
+          let(:params) {
+            # remove param from full_params hash before applying
+            full_params.delete(param)
+            full_params
+          }
+
+          it 'should fail' do
+            expect { should contain_class(subject) }.to raise_error(Puppet::Error, %r{pam_sshd_\[auth\|account\|password\|session\]_lines required when using the pam/sshd.custom.erb template})
+          end
         end
       end
 
@@ -868,7 +898,7 @@ describe 'pam' do
           it "should fail" do
             expect {
               should contain_class('pam')
-            }.to raise_error(Puppet::Error, /pam_sshd_\[auth|account|password|session\]_lines is only valid when pam_d_sshd_template/)
+            }.to raise_error(Puppet::Error, %r{pam_sshd_\[auth\|account\|password\|session\]_lines are only valid when pam_d_sshd_template is configured with the pam/sshd.custom.erb template})
           end
         end
       end
