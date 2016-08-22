@@ -833,27 +833,6 @@ describe 'pam' do
         end
       end
 
-      context "with pam_d_sshd_template set to pam/sshd.custom.erb without specifying all pam_sshd_[auth|account|password|session]_lines params" do
-        let :facts do
-          { :osfamily => v[:osfamily],
-            :"#{v[:releasetype]}" => v[:release],
-            :lsbdistid => v[:lsbdistid],
-          }
-        end
-        let(:params) do
-          { :pam_d_sshd_template => 'pam/sshd.custom.erb',
-            :pam_sshd_auth_lines => [ '#' ],
-            :pam_sshd_account_lines => [ '#' ],
-          }
-        end
-
-        it "should fail" do
-            expect {
-              should contain_class('pam')
-            }.to raise_error(Puppet::Error, %r{pam_sshd_\[auth\|account\|password\|session\]_lines required when using the pam/sshd.custom.erb template})
-        end
-      end
-
       [:pam_sshd_auth_lines, :pam_sshd_account_lines, :pam_sshd_password_lines, :pam_sshd_session_lines].each do |param|
         context "with pam_d_sshd_template set to pam/sshd.custom.erb when only #{param} is missing" do
           let :full_params do
