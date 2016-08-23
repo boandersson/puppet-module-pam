@@ -883,4 +883,46 @@ describe 'pam' do
       end
     end
   end
+
+  describe 'variable type and content validations' do
+    # set needed custom facts and variables
+    let(:facts) do
+      {
+        :operatingsystemmajrelease => '7',
+        :osfamily                  => 'RedHat',
+      }
+    end
+    let(:mandatory_params) { {} }
+
+    validations = {
+      'array for pam_sshd_(auth|account|password|session)_lines' => {
+        :name    => %w(pam_sshd_auth_lines pam_sshd_account_lines pam_sshd_password_lines pam_sshd_session_lines),
+        :params  => { :pam_d_sshd_template => 'pam/sshd.custom.erb', :pam_sshd_auth_lines => ['#'], :pam_sshd_account_lines => ['#'], :pam_sshd_password_lines => ['#'], :pam_sshd_session_lines => ['#']},
+        :valid   => [%w(array)],
+        :invalid => ['string', { 'ha' => 'sh' }, 3, 2.42, true, false],
+        :message => 'is not an Array',
+      },
+    }
+
+    validations.sort.each do |type, var|
+      var[:name].each do |var_name|
+        var[:params] = {} if var[:params].nil?
+        var[:valid].each do |valid|
+          context "when #{var_name} (#{type}) is set to valid #{valid} (as #{valid.class})" do
+            let(:params) { [mandatory_params, var[:params], { :"#{var_name}" => valid, }].reduce(:merge) }
+            it { should compile }
+          end
+        end
+
+        var[:invalid].each do |invalid|
+          context "when #{var_name} (#{type}) is set to invalid #{invalid} (as #{invalid.class})" do
+            let(:params) { [mandatory_params, var[:params], { :"#{var_name}" => invalid, }].reduce(:merge) }
+            it 'should fail' do
+              expect { should contain_class(subject) }.to raise_error(Puppet::Error, /#{var[:message]}/)
+            end
+          end
+        end
+      end # var[:name].each
+    end # validations.sort.each
+  end # describe 'variable type and content validations'
 end
