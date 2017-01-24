@@ -31,6 +31,7 @@ class pam (
   $pam_account_lines                   = undef,
   $pam_password_lines                  = undef,
   $pam_session_lines                   = undef,
+  $pam_session_noninteractive_lines    = undef,
   $pam_d_other_file                    = '/etc/pam.d/other',
   $common_auth_file                    = '/etc/pam.d/common-auth',
   $common_auth_pc_file                 = '/etc/pam.d/common-auth-pc',
@@ -708,7 +709,6 @@ class pam (
                   'auth        required    pam_unix.so use_first_pass',
                 ]
 
-
                 $default_pam_account_lines = [
                   'account sufficient  pam_vas3.so',
                   'account requisite   pam_vas3.so echo_return',
@@ -885,7 +885,6 @@ class pam (
               $default_pam_d_login_template = "pam/login.debian${::lsbmajdistrelease}.erb"
               $default_pam_d_sshd_template  = "pam/sshd.debian${::lsbmajdistrelease}.erb"
               $default_package_name         = 'libpam0g'
-
 
               $default_pam_auth_lines = [
                 'auth  [success=1 default=ignore]  pam_unix.so nullok_secure',
@@ -1194,6 +1193,13 @@ class pam (
     $my_pam_session_lines = $pam_session_lines
   }
 
+  # LEFFE
+  if $pam_session_noninteractive_lines == undef {
+    $my_pam_session_noninteractive_lines = $default_pam_session_lines
+  } else {
+    $my_pam_session_noninteractive_lines = $pam_session_noninteractive_lines
+  }
+
   if ( $::osfamily == 'RedHat' ) and ( $::operatingsystemmajrelease == '6' or $::operatingsystemmajrelease == '7' ) {
     if $pam_password_auth_lines == undef {
       $my_pam_password_auth_lines = $default_pam_password_auth_lines
@@ -1345,7 +1351,7 @@ class pam (
           file { 'pam_common_noninteractive_session':
             ensure  => file,
             path    => $common_session_noninteractive_file,
-            content => template('pam/common-session-pc.erb'),
+            content => template('pam/common-session-noninteractive-pc.erb'),
             owner   => 'root',
             group   => 'root',
             mode    => '0644',
